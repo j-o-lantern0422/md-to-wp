@@ -1,0 +1,4 @@
+.bundle
+vendor/bundle/*
+wp-content
+.env
