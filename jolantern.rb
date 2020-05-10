@@ -50,7 +50,7 @@ class Jolantern
     removed_article = ""
     
     markdown.each_with_index do | line, index |
-      if metadata_flg
+      if metadata_flg && line != "---\n"
         next
       end
 
@@ -61,8 +61,6 @@ class Jolantern
         metadata_flg = false
       end
       removed_article << line
-      
-
     end
 
     removed_article
@@ -93,16 +91,15 @@ class Jolantern
 
   def parse_article(markdown_path)
 
-    tempfile = Tempfile.create("tempfile")
-    markdown = File.open(markdown_path, "r")
-    markdown.each{ | line | tempfile.puts line }
+    metadata_removed_file = Tempfile.create("metadata_removed_file")    
+    metadata_removed_file.puts(remove_metadata(markdown_path))
+    metadata_removed_file.rewind
 
-    tempfile.puts(remove_metadata(markdown))
-    tempfile.rewind
-    tempfile.puts(remove_unnecessary_elementes(tempfile))
-    tempfile.rewind
+    unnecessary_elementes_removed_file = Tempfile.create("unnecessary_elementes_removed_file")  
+    unnecessary_elementes_removed_file.puts(remove_unnecessary_elementes(metadata_removed_file))
+    unnecessary_elementes_removed_file.rewind
     
-    tempfile.read
+    unnecessary_elementes_removed_file.read
   end
 
   def parse_articles
