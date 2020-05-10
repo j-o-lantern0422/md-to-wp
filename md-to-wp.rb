@@ -1,10 +1,11 @@
 require "redcarpet"
 require "rubypress"
+require "date"
 require "dotenv"
 
 require_relative './jolantern.rb'
 
-require "pry"
+require "byebug"
 
 class MarkdownToWordpress
   def initialize
@@ -18,11 +19,12 @@ class MarkdownToWordpress
     )
   end
 
-  def md_to_html(md_path)
-    @md_parser.render(File.open("contents/2017-08-01-post-241.md").read)
+  def md_to_html(markdown)
+    @md_parser.render(markdown)
   end
 
   def post_wp(title:, date:, post_path:, html:)
+    byebug if title.nil? || date.nil? || post_path.nil? || html.nil?
     @wp.newPost(
       blog_id: 0,
       content: {
@@ -38,9 +40,15 @@ class MarkdownToWordpress
 
   def file_path_to_uri(file_path)
     uri_dir_path = file_path.gsub(/.md/, "").split("-")[(0..2)].join("/")
-    basename = File.basename(item, ".*")
 
-    uri_last_path = File.basename(item, ".*").split("-")[3..-1].join("-")
+    begin
+      Date.parse(uri_dir_path.split("/").join)
+    rescue => e
+      return File.basename(file_path, ".*")
+    end
+
+    basename = File.basename(file_path, ".*")
+    uri_last_path = File.basename(file_path, ".*").split("-")[3..-1].join("-")
 
     "#{uri_dir_path}/#{uri_last_path}"
   end
@@ -49,10 +57,9 @@ class MarkdownToWordpress
     j = Jolantern.new
     j.parse_articles.each do | article |
       metadata = article[:metadata]
-      path = metadata[:url] || article[:filename]
+      path = metadata[:url] || file_path_to_uri(article[:filename])
       if path.nil?
         puts("ファイルパスが設定できない")
-        byebug
       end
 
       html = md_to_html(article[:article])

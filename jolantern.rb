@@ -1,7 +1,12 @@
 require "yaml"
 require "pathname"
+require "tempfile"
 
 class Jolantern
+
+  def symbolize_keys(hash)
+    hash.map{|k,v| [k.to_sym, v] }.to_h
+  end
 
   # マークダウンの先頭にあるメタ情報を取得する
   def article_metadata(markdown_path)
@@ -36,7 +41,7 @@ class Jolantern
       header_yaml << line
     end
     
-    YAML.load(header_yaml)
+    symbolize_keys(YAML.load(header_yaml))
   end
 
   def remove_metadata(markdown_path)
