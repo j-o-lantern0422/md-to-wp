@@ -23,18 +23,28 @@ class MarkdownToWordpress
     @md_parser.render(markdown)
   end
 
-  def post_wp(title:, date:, post_path:, html:)
-    byebug if title.nil? || date.nil? || post_path.nil? || html.nil?
+  def post_wp(title:, date:, post_path:, html:, tags:, categories:)
+    terms_names = {}
+    unless categories.empty? 
+      terms_names[:category] = categories
+    end
+
+    unless tags.empty?
+      terms_names[:post_tag] = tags
+    end
+
+    content = {
+      post_status: "publish",
+      post_date: date,
+      post_content: html,
+      post_title: title,
+      post_name: post_path,
+      post_author: 1,
+    }
+
     @wp.newPost(
       blog_id: 0,
-      content: {
-        post_status: "publish",
-        post_date: date,
-        post_content: html,
-        post_title: title,
-        post_name: post_path,
-        post_author: 1
-      }
+      content: content.merge({terms_names: terms_names})
     )
   end
 
@@ -63,10 +73,11 @@ class MarkdownToWordpress
       end
 
       html = md_to_html(article[:article])
-
       post_wp(  
         title: metadata[:title],
         date: metadata[:date],
+        tags: metadata[:tags] || [],
+        categories: metadata[:categories] || [],
         html: html,
         post_path: path
       )
